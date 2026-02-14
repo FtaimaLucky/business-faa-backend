@@ -5,6 +5,7 @@ const env = {
   PORT: parseInt(process.env.PORT || "5000", 10),
   MONGODB_URI: getEnvVariable("MONGODB_URI"),
   API_VERSION: getEnvVariable("API_VERSION"),
+  REDIS_URL: getEnvVariable("REDIS_URL"),
 };
 
 function getEnvVariable(key) {
