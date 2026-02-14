@@ -6,6 +6,9 @@ const env = {
   MONGODB_URI: getEnvVariable("MONGODB_URI"),
   API_VERSION: getEnvVariable("API_VERSION"),
   REDIS_URL: getEnvVariable("REDIS_URL"),
+  CLOUDINARY_NAME: getEnvVariable("CLOUDINARY_NAME"),
+  CLOUDINARY_API_KEY: getEnvVariable("CLOUDINARY_API_KEY"),
+  CLOUDINARY_API_SCERECT: getEnvVariable("CLOUDINARY_API_SCERECT"),
 };
 
 function getEnvVariable(key) {
