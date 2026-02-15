@@ -6,13 +6,7 @@ const mongoose = require("mongoose");
 const categorySchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    slug: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      index: true,
-    },
+    slug: { type: String, unique: true, lowercase: true, index: true },
 
     image: {
       url: { type: String, default: "" },
@@ -28,7 +22,6 @@ const categorySchema = new mongoose.Schema(
     },
 
     description: { type: String, default: "" },
-
     parentCategory: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
@@ -46,8 +39,7 @@ const categorySchema = new mongoose.Schema(
       ogImage: { type: String, default: "" },
     },
 
-    filters: [{ type: String }], // e.g. ["material","color","brand"]
-
+    filters: [{ type: String }],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -62,36 +54,38 @@ const categorySchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// make a slug from name
-categorySchema.pre("save", function (next) {
-  if (!this.isModified("name")) return next();
-  this.slug = slugify(this.name);
-  next();
+// slug from name
+categorySchema.pre("save", function () {
+  if (!this.isModified("name")) return;
+  this.slug = slugify(this.name, { lower: true, strict: true });
 });
 
-// check if slug already exist or not
-categorySchema.pre("save", async function (next) {
-  try {
-    if (!this.isModified("name")) return next();
-    const duplicate = await this.constructor.findOne({ slug: this.slug });
-    if (duplicate) {
-      return next(
-        new ApiError("Category name already exist", HTTP_STATUS.BAD_REQUEST),
-      );
-    }
-    next();
-  } catch (error) {
-    next(new ApiError(error.message, HTTP_STATUS.BAD_REQUEST));
+//  duplicate slug check (async middleware, no next)
+categorySchema.pre("save", async function () {
+  if (!this.isModified("name")) return;
+
+  const duplicate = await this.constructor.findOne({
+    slug: this.slug,
+    _id: { $ne: this._id }, // update case safe
+  });
+
+  if (duplicate) {
+    throw new ApiError("Category name already exist", HTTP_STATUS.BAD_REQUEST);
   }
 });
 
-// set seo metadata from name
-categorySchema.pre("save", function (next) {
-  if (!this.isModified("name")) return next();
+// seo metadata
+categorySchema.pre("save", function () {
+  if (
+    !this.isModified("name") &&
+    !this.isModified("description") &&
+    !this.isModified("image.url")
+  )
+    return;
+
   this.seo.metaTitle = this.name;
   this.seo.metaDescription = this.description;
-  this.seo.ogImage = this.image.url;
-  next();
+  this.seo.ogImage = this.image?.url || "";
 });
 
 module.exports =

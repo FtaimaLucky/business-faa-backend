@@ -26,7 +26,7 @@ app.get("/health", (req, res) => {
   ApiResponse.success(res, HTTP_STATUS.OK, "Healthy", { status: "Healthy" });
 });
 
-app.use("/api/" + env.API_VERSION, require("@/shared/routes/index.routes"));
+app.use(env.API_VERSION, require("@/shared/routes/index.routes"));
 
 // Advanced configuration
 app.use(

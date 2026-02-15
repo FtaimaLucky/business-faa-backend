@@ -1,5 +1,5 @@
 const { Queue } = require("bullmq");
-const { connection } = require("@/shared/config/redis.config");
+const { connection } = require("@/shared/config/redis.config.js");
 
 const IMAGE_QUEUE_NAME = "image-upload";
 
