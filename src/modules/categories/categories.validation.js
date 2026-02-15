@@ -64,12 +64,6 @@ const updateSchema = joi
     {
       name: joi.string().trim().optional(),
       description: joi.string().trim().allow("").optional(),
-      featured: joi.boolean().optional(),
-      isActive: joi.boolean().optional(),
-      sortOrder: joi.number().optional(),
-      parentCategory: joi.string().allow(null, "").optional(),
-      filters: joi.array().items(joi.string()).optional(),
-      seo: joi.object().optional(), // allowUnknown true থাকলে nested seo handle হবে
     },
     { abortEarly: false, allowUnknown: true },
   )
@@ -86,7 +80,7 @@ exports.validateUpdateCategory = async (req, res, next) => {
     const images = validateImageFiles({
       req,
       next,
-      required: req.files.image.length > 0 ? true : false,
+      required: req?.files?.image?.length > 0 ? true : false,
       maxCount: 1,
       maxSizeMB: 10,
       fieldName: "image",
@@ -99,9 +93,15 @@ exports.validateUpdateCategory = async (req, res, next) => {
 
     next();
   } catch (error) {
-    const message = error?.details?.map((e) => e.message).join(", ");
+    if (error.details) {
+      const message = error.details.map((err) => err.message).join(", ");
+      return next(
+        new ApiError("Validation error: " + message, HTTP_STATUS.BAD_REQUEST),
+      );
+    }
+
     return next(
-      new ApiError("Validation error: " + message, HTTP_STATUS.BAD_REQUEST),
+      new ApiError(error || "Validation failed", HTTP_STATUS.BAD_REQUEST),
     );
   }
 };

@@ -82,3 +82,8 @@ const imageWorkerFn = () => {
   );
   imageWorker.on("error", (err) => console.log("🔥 Worker error:", err));
 };
+
+// update worket setup
+const updateCategoryWorker = new Worker(IMAGE_QUEUE_NAME, async (job) => {
+  const { categoryId, localPath, oldPublicId } = job.data;
+});

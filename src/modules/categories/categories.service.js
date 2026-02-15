@@ -59,6 +59,59 @@ class categoryService {
     const categories = await categoryModel.find(query);
     return categories;
   };
+  updateCategory = async (slug, data) => {
+    const files = data?.image || [];
+    const firstImage = Array.isArray(files) ? files[0] : null;
+    const { image, ...rest } = data;
+    // find the category using slug
+    const category = await categoryModel.findOne({ slug });
+    if (!category)
+      throw new ApiError("Category not found", HTTP_STATUS.NOT_FOUND);
+    const oldPublicId = category.image?.publicId || "";
+    // normal fields update
+    const updatePayload = {
+      ...rest,
+      updatedAt: Date.now(),
+    };
+    // if file have
+    if (firstImage?.path) {
+      updatePayload.image = {
+        status: "pending",
+        localPath: firstImage.path,
+        url: "",
+        publicId: oldPublicId, // temporarily keep
+        tries: 0,
+        lastError: "",
+      };
+    }
+
+    const updated = await categoryModel.findByIdAndUpdate(
+      category._id,
+      { $set: updatePayload },
+      { new: true },
+    );
+
+    // enqueue if image exists
+    if (firstImage?.path) {
+      const job = await imageQueue.add(
+        "update-category-image",
+        {
+          categoryId: category._id.toString(),
+          localPath: firstImage.path,
+          oldPublicId,
+        },
+        {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 3000 },
+          removeOnComplete: true,
+          removeOnFail: false,
+        },
+      );
+
+      return { categoryId: category._id, jobId: job.id, status: "queued" };
+    }
+    return updated;
+  };
 }
 
 module.exports = new categoryService();

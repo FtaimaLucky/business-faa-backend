@@ -23,6 +23,17 @@ class CategoryController {
       : new CategoryDTO(category);
     ApiResponse.success(res, 200, "Category fetched", categoryData);
   });
+  updateCategory = asyncHandler(async (req, res, next) => {
+    if (!req.params.slug) {
+      throw new ApiError("Category slug is required", HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const category = await categoryService.updateCategory(
+      req.params.slug,
+      req.validatedData,
+    );
+    ApiResponse.success(res, 200, "Category updated", category);
+  });
 }
 
 module.exports = new CategoryController();
