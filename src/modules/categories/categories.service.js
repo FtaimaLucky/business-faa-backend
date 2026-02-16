@@ -1,4 +1,5 @@
 const categoryModel = require("@/modules/categories/categories.model");
+const { HTTP_STATUS } = require("@/shared/config/constant.config");
 const { imageQueue } = require("@/shared/queues/image.queue");
 const { ApiError } = require("@/shared/utils/apiError.utils");
 
@@ -85,8 +86,8 @@ class categoryService {
       };
     }
 
-    const updated = await categoryModel.findByIdAndUpdate(
-      category._id,
+    const updated = await categoryModel.findOneAndUpdate(
+      { slug: category.slug },
       { $set: updatePayload },
       { new: true },
     );
@@ -108,9 +109,39 @@ class categoryService {
         },
       );
 
-      return { categoryId: category._id, jobId: job.id, status: "queued" };
+      return {
+        categoryId: `${category.name} update Sucessfully`,
+        jobId: job.id,
+        status: "queued",
+      };
     }
     return updated;
+  };
+  deleteCategory = async (slug) => {
+    const category = await categoryModel.findOneAndDelete({ slug });
+    if (!category) {
+      throw new ApiError("Category not found", HTTP_STATUS.NOT_FOUND);
+    }
+    // now remove the old image
+    const job = await imageQueue.add(
+      "delete-category-image",
+      {
+        categoryId: category._id.toString(),
+        oldPublicId: category.image.publicId,
+      },
+      {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 3000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+
+    return {
+      categoryId: `${category.name} deleted Sucessfully`,
+      jobId: job.id,
+      status: "queued",
+    };
   };
 }
 
