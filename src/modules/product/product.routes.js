@@ -13,8 +13,11 @@ _.route("/create-product").post(
 );
 _.route("/get-products").get(productController.getProducts);
 _.route("/update-productinfo/:slug").put(
-  validateUpdateProduct,
+  //   validateUpdateProduct,
   productController.updateProductInfo,
+);
+_.route("/delete-productimage/:slug").delete(
+  productController.deleteProductImage,
 );
 
 module.exports = _;

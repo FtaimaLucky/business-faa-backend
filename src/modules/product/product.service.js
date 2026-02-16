@@ -48,12 +48,40 @@ class ProductService {
     return products;
   };
   updateProductInfo = async (slug, data) => {
-    const product = await productModel.findOneAndUpdate({ slug }, data, {
-      returnDocument: "after",
-    });
+    const product = await productModel.findOneAndUpdate(
+      { slug },
+      { $set: data },
+      {
+        returnDocument: "after",
+        runValidators: true,
+      },
+    );
+
     if (!product) {
       throw new ApiError("Product not found", HTTP_STATUS.NOT_FOUND);
     }
+
+    return product;
+  };
+  deletedProductImage = async (slug, imageid = []) => {
+    const product = await productModel.findOne({ slug });
+    if (!product) {
+      throw new ApiError("Product not found", HTTP_STATUS.NOT_FOUND);
+    }
+    // call the imaage queqe
+    imageQueue.add(
+      "delete-product-image",
+      {
+        productId: product._id,
+        images: imageid,
+      },
+      {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 3000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
     return product;
   };
 }

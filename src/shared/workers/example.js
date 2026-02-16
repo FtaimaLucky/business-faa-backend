@@ -34,6 +34,9 @@ connectDatabase().then(() => {
       if (job.name == "upload-product-image") {
         return handleCreateProductImage(job);
       }
+      if (job.name == "delete-product-image") {
+        return handleDeleteProductImage(job);
+      }
 
       // unknown job
       return null;
@@ -233,4 +236,61 @@ async function handleCreateProductImage(job) {
   }
 
   return { productId, uploadedCount: results.length, images: results };
+}
+
+// handleDeleteProductImage
+async function handleDeleteProductImage(job) {
+  const { productId, images } = job.data;
+
+  if (!productId) throw new Error("productId is required");
+
+  // normalize ids
+  const publicIds = Array.isArray(images)
+    ? [...new Set(images.filter(Boolean).map(String))]
+    : [];
+
+  if (publicIds.length === 0) {
+    return { productId, deletedCount: 0, images: [], failed: [] };
+  }
+
+  // (optional) quick existence check (cheap)
+  const exists = await productModel.exists({ _id: productId });
+  if (!exists) {
+    return { productId, deletedCount: 0, images: [], failed: publicIds };
+  }
+
+  // --- delete in parallel with a small concurrency limit
+  const concurrency = 5;
+  const deleted = [];
+  const failed = [];
+
+  for (let i = 0; i < publicIds.length; i += concurrency) {
+    const batch = publicIds.slice(i, i + concurrency);
+
+    const results = await Promise.allSettled(
+      batch.map((id) => deleteCloudinaryFile(id)),
+    );
+
+    results.forEach((r, idx) => {
+      const id = batch[idx];
+      if (r.status === "fulfilled" && r.value) deleted.push(id);
+      else failed.push(id);
+    });
+  }
+
+  // --- only remove from DB what actually deleted from Cloudinary
+  if (deleted.length > 0) {
+    await productModel.updateOne(
+      { _id: productId },
+      { $pull: { image: { publicId: { $in: deleted } } } },
+    );
+  }
+
+  return {
+    productId,
+    requestedCount: publicIds.length,
+    deletedCount: deleted.length,
+    images: deleted, // deleted publicIds
+    failed, // failed publicIds
+  };
 }

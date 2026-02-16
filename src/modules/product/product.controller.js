@@ -93,7 +93,7 @@ class productController {
     }
     const product = await ProductService.updateProductInfo(
       req.params.slug,
-      req.validatedData,
+      req.body,
     );
     ApiResponse.success(
       res,
@@ -101,6 +101,17 @@ class productController {
       "Product information updated",
       product,
     );
+  });
+
+  deleteProductImage = asyncHandler(async (req, res, next) => {
+    if (!req.params.slug) {
+      throw new ApiError("Product slug is required", HTTP_STATUS.BAD_REQUEST);
+    }
+    const product = await ProductService.deletedProductImage(
+      req.params.slug,
+      req.body,
+    );
+    ApiResponse.success(res, HTTP_STATUS.OK, "Product image deleted", product);
   });
 }
 

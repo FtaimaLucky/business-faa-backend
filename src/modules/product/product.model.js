@@ -109,7 +109,6 @@ productSchema.pre("save", function () {
   }
 });
 
-// when change name the update a slug
 productSchema.pre("findOneAndUpdate", function () {
   const update = this.getUpdate();
   if (!update) return;
@@ -117,14 +116,14 @@ productSchema.pre("findOneAndUpdate", function () {
   // support both direct update and $set update
   const name = update.name || update.$set?.name;
 
-  if (name) {
-    const slug = slugify(name, { lower: true, strict: true });
+  if (!name) return;
 
-    if (update.$set) {
-      update.$set.slug = slug;
-    } else {
-      update.slug = slug;
-    }
+  const slug = slugify(name, { lower: true, strict: true });
+
+  if (update.$set) {
+    update.$set.slug = slug;
+  } else {
+    update.slug = slug;
   }
 
   this.setUpdate(update);
