@@ -87,12 +87,20 @@ class productController {
     ApiResponse.success(res, HTTP_STATUS.OK, "Products fetched", products);
   });
 
-  updateProduct = asyncHandler(async (req, res) => {
-    const product = await ProductService.updateProduct(
+  updateProductInfo = asyncHandler(async (req, res) => {
+    if (!req.params.slug) {
+      throw new ApiError("Product slug is required", HTTP_STATUS.BAD_REQUEST);
+    }
+    const product = await ProductService.updateProductInfo(
       req.params.slug,
       req.validatedData,
     );
-    ApiResponse.success(res, HTTP_STATUS.OK, "Product updated", product);
+    ApiResponse.success(
+      res,
+      HTTP_STATUS.OK,
+      "Product information updated",
+      product,
+    );
   });
 }
 

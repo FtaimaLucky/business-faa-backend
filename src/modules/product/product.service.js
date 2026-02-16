@@ -2,7 +2,6 @@ const { HTTP_STATUS } = require("@/shared/config/constant.config");
 const { imageQueue } = require("@/shared/queues/image.queue");
 const { ApiError } = require("@/shared/utils/apiError.utils");
 const productModel = require("@/modules/product/product.model");
-const categoryModel = require("@/modules/categories/categories.model");
 
 class ProductService {
   createProduct = async (data) => {
@@ -48,9 +47,9 @@ class ProductService {
     }
     return products;
   };
-  updateProduct = async (id, data) => {
-    const product = await productModel.findOneAndUpdate({ _id: id }, data, {
-      new: true,
+  updateProductInfo = async (slug, data) => {
+    const product = await productModel.findOneAndUpdate({ slug }, data, {
+      returnDocument: "after",
     });
     if (!product) {
       throw new ApiError("Product not found", HTTP_STATUS.NOT_FOUND);
