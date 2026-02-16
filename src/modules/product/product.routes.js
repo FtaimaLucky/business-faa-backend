@@ -8,5 +8,6 @@ _.route("/create-product").post(
   validateProduct,
   productController.createProduct,
 );
+_.route("/get-products").get(productController.getProducts);
 
 module.exports = _;

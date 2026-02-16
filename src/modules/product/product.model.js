@@ -25,7 +25,7 @@ const productSchema = new mongoose.Schema(
     },
 
     // Pricing
-    price: { type: Number, required: [true, "Price is required"] },
+    price: { type: Number, default: 0, required: [true, "Price is required"] },
     discountType: {
       type: String,
       enum: ["percentage", "fixed", null],

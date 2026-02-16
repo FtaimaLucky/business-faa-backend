@@ -32,6 +32,31 @@ class ProductService {
 
     return product;
   };
+
+  getProducts = async (filter, sortFilter) => {
+    const products = await productModel
+      .find(filter)
+      .populate({
+        path: "category",
+        select:
+          "-_id  -__v -updatedAt -updatedBy  -createdBy -filters -description",
+      })
+      .select("-_id -__v ")
+      .sort(sortFilter);
+    if (!products.length) {
+      throw new ApiError("Product not found", HTTP_STATUS.NOT_FOUND);
+    }
+    return products;
+  };
+  updateProduct = async (id, data) => {
+    const product = await productModel.findOneAndUpdate({ _id: id }, data, {
+      new: true,
+    });
+    if (!product) {
+      throw new ApiError("Product not found", HTTP_STATUS.NOT_FOUND);
+    }
+    return product;
+  };
 }
 
 module.exports = new ProductService();
