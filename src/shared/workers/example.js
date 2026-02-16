@@ -1,7 +1,7 @@
 // shared/workers/image.worker.js
 require("module-alias/register");
 
-const { Worker, tryCatch } = require("bullmq");
+const { Worker } = require("bullmq");
 const fs = require("fs/promises");
 const path = require("path");
 
@@ -13,6 +13,7 @@ const {
 } = require("@/shared/config/cloudinary.config");
 
 const categoryModel = require("@/modules/categories/categories.model");
+const productModel = require("@/modules/product/product.model");
 const { connectDatabase } = require("../config/db.config");
 
 connectDatabase().then(() => {
@@ -28,6 +29,10 @@ connectDatabase().then(() => {
       }
       if (job.name === "delete-category-image") {
         return handleDeleteCategoryImage(job);
+      }
+      // product job
+      if (job.name == "upload-product-image") {
+        return handleCreateProductImage(job);
       }
 
       // unknown job
@@ -161,4 +166,71 @@ async function handleDeleteCategoryImage(job) {
     console.log("error from deleted category image", error);
     throw error;
   }
+}
+
+// create product image job
+async function handleCreateProductImage(job) {
+  const { productId, images = [] } = job.data;
+
+  if (!productId) throw new Error("productId is required");
+  if (!Array.isArray(images) || images.length === 0) {
+    return { productId, uploadedCount: 0, images: [] };
+  }
+
+  const results = [];
+
+  for (const img of images) {
+    const absPath = path.resolve(img.path);
+
+    try {
+      const uploaded = await cloudinaryFileUpload(absPath);
+
+      // push new image object into image array
+      await productModel.findOneAndUpdate(
+        { _id: productId },
+        {
+          $push: {
+            image: {
+              url: uploaded.secure_url,
+              publicId: uploaded.public_id,
+              optimized_url: uploaded.optimized_url,
+              status: "uploaded",
+              localPath: "",
+              tries: job.attemptsMade + 1,
+              lastError: "",
+            },
+          },
+        },
+        { returnDocument: "after" },
+      );
+      console.log("updated image on product db");
+      results.push({ url: uploaded.secure_url, publicId: uploaded.public_id });
+
+      // cleanup local file
+      await fs.unlink(absPath).catch(() => null);
+    } catch (error) {
+      // push failed image info too (optional but useful)
+      await productModel.findOneAndUpdate(
+        { _id: productId },
+        {
+          $push: {
+            image: {
+              url: "",
+              publicId: "",
+              status: "failed",
+              localPath: img.path,
+              tries: job.attemptsMade + 1,
+              lastError: error?.message || "Upload failed",
+            },
+          },
+        },
+      );
+
+      await fs.unlink(absPath).catch(() => null);
+      // continue next image (don’t stop whole batch)
+      continue;
+    }
+  }
+
+  return { productId, uploadedCount: results.length, images: results };
 }

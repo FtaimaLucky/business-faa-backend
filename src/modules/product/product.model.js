@@ -7,15 +7,15 @@ const productSchema = new mongoose.Schema(
   {
     // Basic Info
     name: { type: String, required: true, trim: true },
-    slug: { type: String, required: true, unique: true, index: true },
+    slug: { type: String, unique: true, index: true },
 
     brand: { type: String, default: "" }, // Legacy
-    sku: { type: String, required: true, unique: true },
+    sku: { type: String, required: true },
     color: [{ type: String, default: "", required: true }],
-    size: [{ type: String, default: "", required: true }],
+    size: [{ type: String, default: "" }],
 
     shortDescription: { type: String, default: "" },
-    description: { type: String, default: "" },
+    description: { type: String, default: "", required: true },
 
     // Category relation
     category: {
@@ -39,7 +39,7 @@ const productSchema = new mongoose.Schema(
     inStock: { type: Boolean, default: true },
 
     // Rating
-    averageRating: {
+    rating: {
       type: Number,
       default: 0,
       max: [5, "Rating cannot be more than 5"],
@@ -55,6 +55,7 @@ const productSchema = new mongoose.Schema(
     image: [
       {
         url: { type: String, default: "" },
+        optimized_url: { type: String, default: "" },
         publicId: { type: String, default: "" },
         status: {
           type: String,
@@ -108,4 +109,5 @@ productSchema.pre("save", function () {
   }
 });
 
-module.exports = mongoose.model("Product", productSchema);
+module.exports =
+  mongoose.models.Product || mongoose.model("Product", productSchema);
