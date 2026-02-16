@@ -38,7 +38,7 @@ class ProductService {
       .populate({
         path: "category",
         select:
-          "-_id  -__v -updatedAt -updatedBy  -createdBy -filters -description",
+          "  -__v -updatedAt -updatedBy  -createdBy -filters -description",
       })
       .select("-_id -__v ")
       .sort(sortFilter);
