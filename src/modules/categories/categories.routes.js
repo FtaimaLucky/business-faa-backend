@@ -18,5 +18,6 @@ _.route("/update-category/:slug").put(
   validateUpdateCategory,
   categoryController.updateCategory,
 );
+_.route("/delete-category/:slug").delete(categoryController.deleteCategory);
 
 module.exports = _;

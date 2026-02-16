@@ -1,7 +1,7 @@
 // shared/workers/image.worker.js
 require("module-alias/register");
 
-const { Worker } = require("bullmq");
+const { Worker, tryCatch } = require("bullmq");
 const fs = require("fs/promises");
 const path = require("path");
 
@@ -26,6 +26,9 @@ connectDatabase().then(() => {
       if (job.name === "update-category-image") {
         return handleUpdateCategoryImage(job);
       }
+      if (job.name === "delete-category-image") {
+        return handleDeleteCategoryImage(job);
+      }
 
       // unknown job
       return null;
@@ -35,7 +38,9 @@ connectDatabase().then(() => {
 
   worker.on("ready", () => console.log("✅ Image Worker ready"));
   worker.on("active", (job) => console.log("▶️ Job active:", job.id, job.name));
-  worker.on("completed", (job) => console.log("✅ Job completed:", job.id));
+  worker.on("completed", (job) =>
+    console.log("✅ Job completed:", job.id, job.name),
+  );
   worker.on("failed", (job, err) =>
     console.log("❌ Job failed:", job?.id, err),
   );
@@ -99,7 +104,7 @@ async function handleUpdateCategoryImage(job) {
     // upload new
     const uploaded = await cloudinaryFileUpload(absPath);
 
-    // ✅ prevent race: only update if still same localPath
+    //  prevent race: only update if still same localPath
     const updated = await categoryModel.findOneAndUpdate(
       { _id: categoryId, "image.localPath": localPath },
       {
@@ -141,5 +146,19 @@ async function handleUpdateCategoryImage(job) {
     if (job.attemptsMade >= 2) {
       await fs.unlink(absPath).catch(() => null);
     }
+  }
+}
+
+// delete category image
+async function handleDeleteCategoryImage(job) {
+  try {
+    const { categoryId, publicId } = job.data;
+    const deleted = await deleteCloudinaryFile(publicId);
+    await categoryModel.deleteOne({ _id: categoryId });
+    console.log("Deleted Category:", deleted);
+    return deleted;
+  } catch (error) {
+    console.log("error from deleted category image", error);
+    throw error;
   }
 }

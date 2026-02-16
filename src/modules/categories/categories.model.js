@@ -88,5 +88,54 @@ categorySchema.pre("save", function () {
   this.seo.ogImage = this.image?.url || "";
 });
 
+categorySchema.pre("findOneAndUpdate", function () {
+  const update = this.getUpdate();
+  if (!update) return;
+
+  // normalize $set
+  const $set = update.$set || {};
+
+  // -------- name changed -> slug + seo.metaTitle
+  if (update.name !== undefined || $set.name !== undefined) {
+    const name = (update.name ?? $set.name) || "";
+    const slug = name ? slugify(name, { lower: true, strict: true }) : "";
+
+    // slug set (same style you are using)
+    if (update.name !== undefined) update.slug = slug;
+    else $set.slug = slug;
+
+    // only metaTitle update (others untouched)
+    $set["seo.metaTitle"] = name;
+  }
+
+  // -------- description changed -> seo.metaDescription
+  if (update.description !== undefined || $set.description !== undefined) {
+    const desc = (update.description ?? $set.description) || "";
+    $set["seo.metaDescription"] = desc;
+  }
+
+  // -------- image url changed -> seo.ogImage
+  const imgUrlChanged =
+    update?.image?.url !== undefined ||
+    $set?.image?.url !== undefined ||
+    $set["image.url"] !== undefined ||
+    update["image.url"] !== undefined;
+
+  if (imgUrlChanged) {
+    const imgUrl =
+      update?.image?.url ??
+      $set?.image?.url ??
+      $set["image.url"] ??
+      update["image.url"] ??
+      "";
+
+    $set["seo.ogImage"] = imgUrl;
+  }
+
+  // re-attach $set & apply update
+  update.$set = $set;
+  this.setUpdate(update);
+});
+
 module.exports =
   mongoose.models.Category || mongoose.model("Category", categorySchema);

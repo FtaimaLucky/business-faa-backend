@@ -34,6 +34,15 @@ class CategoryController {
     );
     ApiResponse.success(res, 200, "Category updated", category);
   });
+
+  deleteCategory = asyncHandler(async (req, res, next) => {
+    if (!req.params.slug) {
+      throw new ApiError("Category slug is required", HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const category = await categoryService.deleteCategory(req.params.slug);
+    ApiResponse.success(res, 200, "Category deleted", category);
+  });
 }
 
 module.exports = new CategoryController();
