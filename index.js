@@ -10,6 +10,9 @@ connectDatabase()
     });
     console.log("Server started on port 3000");
   })
+  .then(() => {
+    require("@/shared/workers/example");
+  })
   .catch((error) => {
     console.log(error);
     console.error("Failed to connect to the database in index.js:", error);
