@@ -1,5 +1,6 @@
 class CategoryDTO {
   constructor(category) {
+    this.id = category._id;
     this.name = category.name;
     this.slug = category.slug;
     this.description = category.description;

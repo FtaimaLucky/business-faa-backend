@@ -70,7 +70,7 @@ class productController {
 
     // Rating
     if (rating) {
-      filter.averageRating = { $gte: Number(rating) };
+      filter.rating = { $eq: Number(rating) };
     }
 
     // Name Search

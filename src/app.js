@@ -8,8 +8,9 @@ const express = require("express");
 const compression = require("compression");
 const morgan = require("morgan");
 const { env } = require("./shared/config/env.config");
+const cors = require("cors");
 const app = express();
-
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
