@@ -109,9 +109,29 @@ class productController {
     }
     const product = await ProductService.deletedProductImage(
       req.params.slug,
-      req.body,
+      req.body.publicId,
     );
-    ApiResponse.success(res, HTTP_STATUS.OK, "Product image deleted", product);
+    ApiResponse.success(
+      res,
+      HTTP_STATUS.OK,
+      "Product image deleted",
+      product.name,
+    );
+  });
+  uploadProductImage = asyncHandler(async (req, res, next) => {
+    if (!req.params.slug) {
+      throw new ApiError("Product slug is required", HTTP_STATUS.BAD_REQUEST);
+    }
+    const product = await ProductService.uploadProductImage(
+      req.params.slug,
+      req.validatedData.image,
+    );
+    ApiResponse.success(
+      res,
+      HTTP_STATUS.OK,
+      "Product image uploaded",
+      product.name,
+    );
   });
 }
 

@@ -84,6 +84,30 @@ class ProductService {
     );
     return product;
   };
+  //   upload product imahge
+  uploadProductImage = async (slug, images) => {
+    const product = await productModel.findOne({ slug });
+    if (!product) {
+      throw new ApiError("Product not found", HTTP_STATUS.NOT_FOUND);
+    }
+
+    // call the imaage queqe
+    imageQueue.add(
+      "upload-product-image",
+      {
+        productId: product._id,
+        images: images,
+      },
+      {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 3000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+
+    return product;
+  };
 }
 
 module.exports = new ProductService();

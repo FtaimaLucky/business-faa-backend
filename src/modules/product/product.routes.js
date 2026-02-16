@@ -4,6 +4,7 @@ const express = require("express");
 const {
   validateProduct,
   validateUpdateProduct,
+  validateProductImage,
 } = require("./product.validation");
 const _ = express.Router();
 _.route("/create-product").post(
@@ -13,11 +14,16 @@ _.route("/create-product").post(
 );
 _.route("/get-products").get(productController.getProducts);
 _.route("/update-productinfo/:slug").put(
-  //   validateUpdateProduct,
+  validateUpdateProduct,
   productController.updateProductInfo,
 );
 _.route("/delete-productimage/:slug").delete(
   productController.deleteProductImage,
+);
+_.route("/upload-product-image/:slug").post(
+  upload.fields([{ name: "image", maxCount: 10 }]),
+  validateProductImage,
+  productController.uploadProductImage,
 );
 
 module.exports = _;

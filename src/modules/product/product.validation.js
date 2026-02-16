@@ -143,3 +143,37 @@ exports.validateUpdateProduct = async (req, res, next) => {
     );
   }
 };
+
+// only image vfalidation
+exports.validateProductImage = async (req, res, next) => {
+  try {
+    const images = validateImageFiles({
+      req,
+      next,
+      required: true,
+      maxCount: 10,
+      maxSizeMB: 10,
+      fieldName: "image",
+    });
+
+    req.validatedData = {
+      image: images,
+    };
+
+    next();
+  } catch (error) {
+    if (error.details) {
+      const message = error.details.map((err) => err.message).join(", ");
+      return next(
+        new ApiError("Validation error: " + message, HTTP_STATUS.BAD_REQUEST),
+      );
+    }
+
+    return next(
+      new ApiError(
+        error.message || "Validation failed",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+};
