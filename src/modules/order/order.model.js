@@ -8,13 +8,8 @@ const orderItemSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    name: { type: String, required: true, trim: true },
-    slug: { type: String, required: true, trim: true, index: true },
-    image: { type: String, default: "" },
 
-    price: { type: Number, required: true, min: 0 },
     qty: { type: Number, required: true, min: 1 },
-
     color: { type: String, default: null, trim: true },
     size: { type: String, default: null, trim: true },
   },
@@ -26,14 +21,6 @@ const orderSchema = new mongoose.Schema(
     invoiceId: { type: String, unique: true, index: true }, // ex: INV-20260217-XXXX
     status: {
       type: String,
-      enum: [
-        "pending",
-        "confirmed",
-        "processing",
-        "shipped",
-        "delivered",
-        "cancelled",
-      ],
       default: "pending",
     },
 
@@ -80,14 +67,6 @@ orderSchema.pre("save", function () {
     const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
     this.invoiceId = `INV-${y}${m}${day}-${rand}`;
   }
-
-  // totals calc
-  const items = this.items || [];
-  this.totalQty = items.reduce((sum, it) => sum + Number(it.qty || 0), 0);
-  this.subtotal = items.reduce(
-    (sum, it) => sum + Number(it.price || 0) * Number(it.qty || 0),
-    0,
-  );
 
   // normalize note
   if (typeof this.note === "string") {
