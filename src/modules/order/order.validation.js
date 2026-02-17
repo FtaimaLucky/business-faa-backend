@@ -14,17 +14,12 @@ const orderCreateSchema = joi.object(
           "any.required": "Customer fullName is required.",
         }),
 
-        phone: joi
-          .string()
-          .trim()
-          .pattern(/^\+8801\d{9}$/)
-          .required()
-          .messages({
-            "string.empty": "Customer phone is required.",
-            "any.required": "Customer phone is required.",
-            "string.pattern.base":
-              "Phone must be in format +8801XXXXXXXXX (Bangladesh).",
-          }),
+        phone: joi.string().trim().required().messages({
+          "string.empty": "Customer phone is required.",
+          "any.required": "Customer phone is required.",
+          "string.pattern.base":
+            "Phone must be in format +8801XXXXXXXXX or 01XXXXXXXXX (Bangladesh).",
+        }),
 
         address: joi.string().trim().required().messages({
           "string.empty": "Customer address is required.",
@@ -81,6 +76,7 @@ const orderCreateSchema = joi.object(
 );
 
 exports.validateCreateOrder = async (req, res, next) => {
+  console.log(req.body);
   try {
     const value = await orderCreateSchema.validateAsync(req.body, {
       abortEarly: false,

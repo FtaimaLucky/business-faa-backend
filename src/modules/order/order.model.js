@@ -30,9 +30,11 @@ const orderSchema = new mongoose.Schema(
         type: String,
         required: true,
         trim: true,
-        // matches +8801XXXXXXXXX (BD)
-        match: [/^\+8801\d{9}$/, "Invalid phone number format"],
         index: true,
+        validate: [
+          (v) => /^(?:\+88|01)\d{11}$/.test(v) || /^01\d{9}$/.test(v),
+          "Phone must be in format +8801XXXXXXXXX or 01XXXXXXXXX (Bangladesh).",
+        ],
       },
       address: { type: String, required: true, trim: true },
     },
