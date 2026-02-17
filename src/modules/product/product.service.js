@@ -40,7 +40,7 @@ class ProductService {
         select:
           "  -__v -updatedAt -updatedBy  -createdBy -filters -description",
       })
-      .select("-_id -__v ")
+      .select(" -__v ")
       .sort(sortFilter);
     if (!products.length) {
       throw new ApiError("Product not found", HTTP_STATUS.NOT_FOUND);
