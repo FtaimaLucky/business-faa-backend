@@ -2,6 +2,7 @@ const { HTTP_STATUS } = require("@/shared/config/constant.config");
 const { imageQueue } = require("@/shared/queues/image.queue");
 const { ApiError } = require("@/shared/utils/apiError.utils");
 const productModel = require("@/modules/product/product.model");
+const { getCache, setCache } = require("@/shared/utils/cache.util");
 
 class ProductService {
   createProduct = async (data) => {
@@ -33,6 +34,20 @@ class ProductService {
   };
 
   getProducts = async (filter, sortFilter) => {
+    let query = "";
+    for (let key in filter) {
+      if (key) {
+        query = key;
+      } else {
+        console.log("nai");
+      }
+    }
+    const cacheKey = `products:v1:${JSON.stringify(query || "")}`;
+
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
     const products = await productModel
       .find(filter)
       .populate({
@@ -45,6 +60,8 @@ class ProductService {
     if (!products.length) {
       throw new ApiError("Product not found", HTTP_STATUS.NOT_FOUND);
     }
+    //  Save to cache (60 seconds)
+    await setCache(cacheKey, products, 60);
     return products;
   };
   updateProductInfo = async (slug, data) => {
