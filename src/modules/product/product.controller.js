@@ -30,6 +30,7 @@ class productController {
       name,
       slug,
       oldest,
+      isBestSelling,
     } = req.query;
     let filter = {};
     let sort = {};
@@ -81,6 +82,9 @@ class productController {
     // Slug
     if (slug) {
       filter.slug = slug;
+    }
+    if (isBestSelling) {
+      filter.isBestSelling = isBestSelling;
     }
 
     const products = await ProductService.getProducts(filter, sort);
