@@ -13,8 +13,13 @@ const deleteCache = async (key) => {
   await cache.del(key);
 };
 
+const flushdb = async () => {
+  await cache.flushdb();
+};
+
 module.exports = {
   getCache,
   setCache,
   deleteCache,
+  flushdb,
 };

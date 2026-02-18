@@ -2,6 +2,11 @@ const categoryModel = require("@/modules/categories/categories.model");
 const { HTTP_STATUS } = require("@/shared/config/constant.config");
 const { imageQueue } = require("@/shared/queues/image.queue");
 const { ApiError } = require("@/shared/utils/apiError.utils");
+const {
+  getCache,
+  setCache,
+  deleteCache,
+} = require("@/shared/utils/cache.util");
 
 class categoryService {
   createCategory = async (data) => {
@@ -57,7 +62,16 @@ class categoryService {
     }
   };
   getCategories = async (query) => {
+    const key = JSON.stringify(query.slug || "categories");
+    const cached = await getCache(key);
+    if (cached) {
+      return cached;
+    }
     const categories = await categoryModel.find(query);
+    if (!categories) {
+      throw new ApiError("Categories not found", HTTP_STATUS.NOT_FOUND);
+    }
+    setCache(key, categories);
     return categories;
   };
   updateCategory = async (slug, data) => {
@@ -108,6 +122,8 @@ class categoryService {
           removeOnFail: false,
         },
       );
+      const key = JSON.stringify(slug);
+      deleteCache(key);
 
       return {
         categoryId: `${category.name} update Sucessfully`,
@@ -136,6 +152,8 @@ class categoryService {
         removeOnFail: false,
       },
     );
+    const key = JSON.stringify(slug);
+    deleteCache(key);
 
     return {
       categoryId: `${category.name} deleted Sucessfully`,

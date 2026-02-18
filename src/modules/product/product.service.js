@@ -2,7 +2,7 @@ const { HTTP_STATUS } = require("@/shared/config/constant.config");
 const { imageQueue } = require("@/shared/queues/image.queue");
 const { ApiError } = require("@/shared/utils/apiError.utils");
 const productModel = require("@/modules/product/product.model");
-const { getCache, setCache } = require("@/shared/utils/cache.util");
+const { getCache, setCache, flushdb } = require("@/shared/utils/cache.util");
 
 class ProductService {
   createProduct = async (data) => {
@@ -77,6 +77,7 @@ class ProductService {
     if (!product) {
       throw new ApiError("Product not found", HTTP_STATUS.NOT_FOUND);
     }
+    flushdb();
 
     return product;
   };
@@ -99,6 +100,9 @@ class ProductService {
         removeOnFail: false,
       },
     );
+
+    // destroy all cached data
+    flushdb();
     return product;
   };
   //   upload product imahge
