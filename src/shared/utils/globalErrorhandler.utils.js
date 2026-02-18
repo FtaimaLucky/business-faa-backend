@@ -4,14 +4,30 @@ const { env } = require("../config/env.config");
 const productionError = (error, res) => {
   console.log("from production error funtion ", error);
   if (error.isOperational) {
+    // return res.status(error.statusCode).json({
+    //   statusCode: error.statusCode,
+    //   message: error.message,
+    // });
     return res.status(error.statusCode).json({
       statusCode: error.statusCode,
       message: error.message,
+      status: error.status,
+      isOperational: error.isOperationalError,
+      data: error.data,
+      errorStack: error.stack,
     });
   } else {
+    // return res.status(error.statusCode).json({
+    //   status: "error",
+    //   message: "Something went wrong , please try agin later !!",
+    // });
     return res.status(error.statusCode).json({
-      status: "error",
-      message: "Something went wrong , please try agin later !!",
+      statusCode: error.statusCode,
+      message: error.message,
+      status: error.status,
+      isOperational: error.isOperationalError,
+      data: error.data,
+      errorStack: error.stack,
     });
   }
 };
