@@ -17,6 +17,7 @@ const productionError = (error, res) => {
 };
 // this error only show when you are working on developement mode
 const developementError = (error, res) => {
+  console.log("Error from development Error Handler", error);
   return res.status(error.statusCode).json({
     statusCode: error.statusCode,
     message: error.message,
@@ -28,7 +29,6 @@ const developementError = (error, res) => {
 };
 
 const globalErrorHandeler = (error, req, res, next) => {
-  console.log("Error from Global Error Handler", error);
   error.statusCode = error.statusCode || 500;
   if (env.NODE_ENV == "developement") {
     developementError(error, res);
