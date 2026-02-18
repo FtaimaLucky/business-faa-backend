@@ -3,6 +3,7 @@ const { HTTP_STATUS } = require("@/shared/config/constant.config");
 const { ApiError } = require("@/shared/utils/apiError.utils");
 const productModel = require("@/modules/product/product.model");
 const mongoose = require("mongoose");
+const { getCache, deleteCache } = require("@/shared/utils/cache.util");
 class createOrderService {
   async createOrder(data) {
     const session = await mongoose.startSession();
@@ -105,6 +106,7 @@ class createOrderService {
         }
       });
 
+      deleteCache("order");
       // committed successfully
       return createdOrder;
     } catch (err) {
@@ -116,6 +118,11 @@ class createOrderService {
 
   //   get getOrders
   getOrders = async (query) => {
+    const key = JSON.stringify(query.invoiceId || "order");
+    const cached = await getCache(key);
+    if (cached) {
+      return cached;
+    }
     const orders = await orderModel.find(query).sort({ createdAt: -1 });
     if (!orders) {
       throw new ApiError("Orders not found", HTTP_STATUS.BAD_REQUEST);
@@ -129,6 +136,8 @@ class createOrderService {
     if (!order) {
       throw new ApiError("Order not found", HTTP_STATUS.BAD_REQUEST);
     }
+    const key = JSON.stringify(id);
+    deleteCache(key);
     return order;
   };
 }
