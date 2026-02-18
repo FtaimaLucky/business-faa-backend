@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const env = {
-  NODE_ENV: process.env.NODE_ENV || "development",
+  NODE_ENV: process.env.NODE_ENV || "developement",
   PORT: parseInt(process.env.PORT || "5000", 10),
   MONGODB_URI: getEnvVariable("MONGODB_URI"),
   API_VERSION: getEnvVariable("API_VERSION"),
