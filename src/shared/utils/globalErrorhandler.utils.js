@@ -32,7 +32,7 @@ const globalErrorHandeler = (error, req, res, next) => {
   error.statusCode = error.statusCode || 500;
   if (env.NODE_ENV == "developement") {
     developementError(error, res);
-  } else if (env.NODE_ENV == "production") {
+  } else {
     productionError(error, res);
   }
 };
