@@ -82,6 +82,7 @@ class createOrderService {
               items: orderItems,
               totalQty,
               subtotal,
+              deliveryCharge,
             },
           ],
           { session },

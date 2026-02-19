@@ -71,6 +71,7 @@ const orderCreateSchema = joi.object(
       }),
 
     note: joi.string().trim().allow(null, "").optional(),
+    deliveryCharge: joi.number().optional(),
   },
   { abortEarly: false, allowUnknown: true },
 );
