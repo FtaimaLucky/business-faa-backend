@@ -29,6 +29,11 @@ class ContactMessageController {
     const contact = await this.service.getContact(query);
     ApiResponse.success(res, HTTP_STATUS.OK, "Contact fetched", contact);
   });
+
+  deleteContact = asyncHandler(async (req, res) => {
+    const contact = await this.service.deleteContact(req.params.phoneNumber);
+    ApiResponse.success(res, HTTP_STATUS.OK, "Contact deleted", contact);
+  });
 }
 
 module.exports = new ContactMessageController();

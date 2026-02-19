@@ -19,6 +19,15 @@ class ContactMessageService {
     }
     return contact;
   };
+  deleteContact = async (phoneNumber) => {
+    const contact = await contactMessageModel.findOneAndDelete({
+      phoneNumber: phoneNumber,
+    });
+    if (!contact) {
+      throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Contact not found");
+    }
+    return contact;
+  };
 }
 
 module.exports = new ContactMessageService();
