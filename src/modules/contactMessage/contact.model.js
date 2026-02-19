@@ -19,4 +19,15 @@ const contactSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// check same number is already have
+contactSchema.pre("save", async function () {
+  const duplicate = await this.constructor.findOne({
+    phoneNumber: this.phoneNumber,
+  });
+
+  if (duplicate) {
+    throw new ApiError("Contact already exist", HTTP_STATUS.BAD_REQUEST);
+  }
+});
+
 module.exports = mongoose.model("Contact", contactSchema);
