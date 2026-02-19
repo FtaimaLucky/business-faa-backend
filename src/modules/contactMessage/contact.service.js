@@ -11,7 +11,7 @@ class ContactMessageService {
     return contact;
   };
   getContact = async (query) => {
-    const contact = (await contactMessageModel.find(query)).sort({
+    const contact = await contactMessageModel.find(query).sort({
       createdAt: -1,
     });
     if (!contact) {
