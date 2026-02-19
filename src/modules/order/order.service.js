@@ -127,7 +127,12 @@ class createOrderService {
     if (cached) {
       return cached;
     }
-    const orders = await orderModel.find(query).sort({ createdAt: -1 });
+    const orders = await orderModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "items.productId",
+      });
     if (!orders) {
       throw new ApiError("Orders not found", HTTP_STATUS.BAD_REQUEST);
     }
