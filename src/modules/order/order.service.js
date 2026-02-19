@@ -82,7 +82,7 @@ class createOrderService {
               items: orderItems,
               totalQty,
               subtotal,
-              deliveryCharge,
+              deliveryCharge: data.deliveryCharge || 0,
             },
           ],
           { session },
