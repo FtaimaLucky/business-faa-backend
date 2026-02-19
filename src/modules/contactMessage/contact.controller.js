@@ -18,6 +18,17 @@ class ContactMessageController {
     });
     ApiResponse.success(res, HTTP_STATUS.CREATED, "Contact created", contact);
   });
+
+  getContact = asyncHandler(async (req, res) => {
+    let query = {};
+    if (req.query.phoneNumber) {
+      query.phoneNumber = req.query.phoneNumber;
+    } else {
+      query = {};
+    }
+    const contact = await this.service.getContact(query);
+    ApiResponse.success(res, HTTP_STATUS.OK, "Contact fetched", contact);
+  });
 }
 
 module.exports = new ContactMessageController();
