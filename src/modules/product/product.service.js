@@ -129,6 +129,27 @@ class ProductService {
 
     return product;
   };
+  deleteProductService = async (slug) => {
+    const product = await productModel.findOne({ slug });
+    if (!product) {
+      throw new ApiError("Product not found", HTTP_STATUS.NOT_FOUND);
+    }
+    // call the imaage queqe
+    imageQueue.add(
+      "delete-product",
+      {
+        productId: product._id,
+        images: product.image,
+      },
+      {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 3000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+    return product;
+  };
 }
 
 module.exports = new ProductService();

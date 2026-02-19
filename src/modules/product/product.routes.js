@@ -26,4 +26,6 @@ _.route("/upload-product-image/:slug").post(
   productController.uploadProductImage,
 );
 
+_.route("/delete-product/:slug").delete(productController.deleteProuct);
+
 module.exports = _;

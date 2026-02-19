@@ -37,6 +37,9 @@ connectDatabase().then(() => {
       if (job.name == "delete-product-image") {
         return handleDeleteProductImage(job);
       }
+      if (job.name == "delete-product") {
+        return handleDeleteProductImage(job);
+      }
 
       // unknown job
       return null;
@@ -293,4 +296,17 @@ async function handleDeleteProductImage(job) {
     images: deleted, // deleted publicIds
     failed, // failed publicIds
   };
+}
+
+// handleDeleteProductImage
+async function handleDeleteProductImage(job) {
+  const { productId, images } = job.data;
+
+  if (!productId) throw new Error("productId is required");
+  const product = await productModel.findOneAndDelete({ _id: productId });
+  if (!product) throw new Error("Product not found");
+  for (let obj of images) {
+    await deleteCloudinaryFile(obj.publicId);
+  }
+  return { productId, deletedCount: images.length, images };
 }

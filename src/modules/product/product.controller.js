@@ -137,6 +137,15 @@ class productController {
       product.name,
     );
   });
+
+  // deleteProuct
+  deleteProuct = asyncHandler(async (req, res, next) => {
+    if (!req.params.slug) {
+      throw new ApiError("Product slug is required", HTTP_STATUS.BAD_REQUEST);
+    }
+    const product = await ProductService.deleteProductService(req.params.slug);
+    ApiResponse.success(res, HTTP_STATUS.OK, "Product deleted", product.name);
+  });
 }
 
 module.exports = new productController();
