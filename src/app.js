@@ -33,7 +33,7 @@ app.use(env.API_VERSION, require("@/shared/routes/index.routes"));
 app.use(
   compression({
     level: 6, // Compression level (0-9)
-    threshold: 1024, // শুধু 1KB এর বড় response compress করো
+    threshold: 1024, // just compress upscale of 1 kb
     filter: (req, res) => {
       // Specific routes এর জন্য compression on/off
       if (req.path === "/api/stream") {
