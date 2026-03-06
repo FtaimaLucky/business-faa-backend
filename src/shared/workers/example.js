@@ -15,6 +15,7 @@ const {
 const categoryModel = require("@/modules/categories/categories.model");
 const productModel = require("@/modules/product/product.model");
 const { connectDatabase } = require("../config/db.config");
+const { bumpNsVersion } = require("../utils/cache.util");
 
 connectDatabase().then(() => {
   const worker = new Worker(
@@ -82,6 +83,8 @@ async function handleCreateCategoryImage(job) {
     });
 
     await fs.unlink(absPath).catch(() => null);
+    // invalidate category cache
+    await bumpNsVersion("category");
     return { categoryId, imageUrl: uploaded.secure_url };
   } catch (err) {
     await categoryModel.findByIdAndUpdate(categoryId, {
@@ -91,6 +94,8 @@ async function handleCreateCategoryImage(job) {
       "image.localPath": localPath,
     });
 
+    // invalidate category cache
+    await bumpNsVersion("category");
     throw err;
   } finally {
     if (job.attemptsMade >= 2) {
@@ -141,7 +146,8 @@ async function handleUpdateCategoryImage(job) {
     if (oldPublicId && oldPublicId !== uploaded.public_id) {
       await deleteCloudinaryFile(oldPublicId);
     }
-
+    // invalidate category cache
+    await bumpNsVersion("category");
     await fs.unlink(absPath).catch(() => null);
     return { categoryId, imageUrl: uploaded.secure_url };
   } catch (err) {
@@ -151,6 +157,8 @@ async function handleUpdateCategoryImage(job) {
       "image.lastError": err?.message || "Upload failed",
       "image.localPath": localPath,
     });
+    // invalidate category cache
+    await bumpNsVersion("category");
 
     throw err;
   } finally {
@@ -167,8 +175,12 @@ async function handleDeleteCategoryImage(job) {
     const deleted = await deleteCloudinaryFile(publicId);
     await categoryModel.deleteOne({ _id: categoryId });
     console.log("Deleted Category:", deleted);
+    // invalidate category cache
+    await bumpNsVersion("category");
     return deleted;
   } catch (error) {
+    // invalidate category cache
+    await bumpNsVersion("category");
     console.log("error from deleted category image", error);
     throw error;
   }
@@ -211,6 +223,7 @@ async function handleCreateProductImage(job) {
       );
       console.log("updated image on product db");
       results.push({ url: uploaded.secure_url, publicId: uploaded.public_id });
+      await bumpNsVersion("product");
 
       // cleanup local file
       await fs.unlink(absPath).catch(() => null);
@@ -231,6 +244,7 @@ async function handleCreateProductImage(job) {
           },
         },
       );
+      await bumpNsVersion("product");
 
       await fs.unlink(absPath).catch(() => null);
       // continue next image (don’t stop whole batch)
@@ -288,6 +302,7 @@ async function handleDeleteProductImage(job) {
       { $pull: { image: { publicId: { $in: deleted } } } },
     );
   }
+  await bumpNsVersion("product");
 
   return {
     productId,
@@ -308,5 +323,7 @@ async function handleDeleteProductImage(job) {
   for (let obj of images) {
     await deleteCloudinaryFile(obj.publicId);
   }
+  await bumpNsVersion("product");
+
   return { productId, deletedCount: images.length, images };
 }

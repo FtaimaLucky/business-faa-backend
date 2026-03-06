@@ -1,11 +1,24 @@
 const ApiResponse = require("@/shared/utils/apiResponse.utils");
 const asyncHandler = require("@/shared/utils/asyncHandeler.utils");
 const { HTTP_STATUS } = require("@/shared/config/constant.config");
+const { ApiError } = require("@/shared/utils/apiError.utils");
 const ProductService = require("@/modules/product/product.service");
+const {
+  getCache,
+  setCache,
+  deleteCache,
+  getNsVersion,
+  bumpNsVersion,
+  buildCacheKey,
+} = require("@/shared/utils/cache.util");
 
 class productController {
   createProduct = asyncHandler(async (req, res) => {
     const product = await ProductService.createProduct(req.validatedData);
+
+    // cache invalidate
+    await bumpNsVersion("product");
+
     ApiResponse.success(
       res,
       HTTP_STATUS.CREATED,
@@ -32,6 +45,7 @@ class productController {
       oldest,
       isBestSelling,
     } = req.query;
+
     let filter = {};
     let sort = {};
 
@@ -47,14 +61,14 @@ class productController {
     // Category
     if (category) filter.category = category;
 
-    // Price Range (Fix overwrite issue)
+    // Price Range
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
-    // Color (array support)
+    // Color
     if (color) {
       const colors = Array.isArray(color) ? color : [color];
       filter.color = { $in: colors };
@@ -66,7 +80,7 @@ class productController {
 
     // Limited
     if (isLimited !== undefined) {
-      filter.isLimited = isLimited;
+      filter.isLimited = isLimited === "true";
     }
 
     // Rating
@@ -83,11 +97,38 @@ class productController {
     if (slug) {
       filter.slug = slug;
     }
-    if (isBestSelling) {
-      filter.isBestSelling = isBestSelling;
+
+    // Best Selling
+    if (isBestSelling !== undefined) {
+      filter.isBestSelling = isBestSelling === "true";
     }
 
+    // -------- CACHE KEY BUILD --------
+    const cachePayload = {
+      filter,
+      sort,
+    };
+
+    const suffix = JSON.stringify(cachePayload);
+    const cacheKey = await buildCacheKey("product", suffix);
+
+    // try cache
+    const cachedProducts = await getCache(cacheKey);
+    if (cachedProducts) {
+      return ApiResponse.success(
+        res,
+        HTTP_STATUS.OK,
+        "Products fetched from cache",
+        cachedProducts,
+      );
+    }
+
+    // db hit
     const products = await ProductService.getProducts(filter, sort);
+
+    // set cache (ttl 5 minutes)
+    await setCache(cacheKey, products, 300);
+
     ApiResponse.success(res, HTTP_STATUS.OK, "Products fetched", products);
   });
 
@@ -95,10 +136,15 @@ class productController {
     if (!req.params.slug) {
       throw new ApiError("Product slug is required", HTTP_STATUS.BAD_REQUEST);
     }
+
     const product = await ProductService.updateProductInfo(
       req.params.slug,
       req.body,
     );
+
+    // cache invalidate
+    await bumpNsVersion("product");
+
     ApiResponse.success(
       res,
       HTTP_STATUS.OK,
@@ -107,14 +153,19 @@ class productController {
     );
   });
 
-  deleteProductImage = asyncHandler(async (req, res, next) => {
+  deleteProductImage = asyncHandler(async (req, res) => {
     if (!req.params.slug) {
       throw new ApiError("Product slug is required", HTTP_STATUS.BAD_REQUEST);
     }
+
     const product = await ProductService.deletedProductImage(
       req.params.slug,
       req.body.publicId,
     );
+
+    // cache invalidate
+    await bumpNsVersion("product");
+
     ApiResponse.success(
       res,
       HTTP_STATUS.OK,
@@ -122,14 +173,20 @@ class productController {
       product.name,
     );
   });
-  uploadProductImage = asyncHandler(async (req, res, next) => {
+
+  uploadProductImage = asyncHandler(async (req, res) => {
     if (!req.params.slug) {
       throw new ApiError("Product slug is required", HTTP_STATUS.BAD_REQUEST);
     }
+
     const product = await ProductService.uploadProductImage(
       req.params.slug,
       req.validatedData.image,
     );
+
+    // cache invalidate
+    await bumpNsVersion("product");
+
     ApiResponse.success(
       res,
       HTTP_STATUS.OK,
@@ -138,12 +195,16 @@ class productController {
     );
   });
 
-  // deleteProuct
-  deleteProuct = asyncHandler(async (req, res, next) => {
+  deleteProuct = asyncHandler(async (req, res) => {
     if (!req.params.slug) {
       throw new ApiError("Product slug is required", HTTP_STATUS.BAD_REQUEST);
     }
+
     const product = await ProductService.deleteProductService(req.params.slug);
+
+    // cache invalidate
+    await bumpNsVersion("product");
+
     ApiResponse.success(res, HTTP_STATUS.OK, "Product deleted", product.name);
   });
 }
